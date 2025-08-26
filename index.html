@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calm Home Base — Interactive Demo</title>
+<style>
+  :root{
+    /* Jesse's palette */
+    --blue-1:#4A7A92; --blue-2:#5A94B1; --blue-3:#C2D6E1;
+    --sage-1:#879B8D; --sage-2:#A0B4A7; --sage-3:#D3DDD7;
+    --purple-1:#756A85; --purple-2:#8E869F; --purple-3:#C4BFD0;
+    --bg: #f7f9fb; --ink:#1c2330; --ink-muted:#405264; --white:#ffffff;
+    --ok:#4a915e; --warn:#c27b2a; --danger:#b45454;
+    --card-shadow: 0 10px 30px rgba(16,24,40,0.06), 0 2px 6px rgba(16,24,40,0.06);
+    --radius: 18px;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0; background: radial-gradient(1200px 600px at 20% 0%, var(--purple-3) 0%, transparent 50%),
+                       radial-gradient(900px 600px at 100% 0%, var(--blue-3) 0%, transparent 50%),
+                       linear-gradient(180deg, #f9fbfd 0%, #eef3f7 100%);
+    color:var(--ink); font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    display:flex; flex-direction:column;
+  }
+  header{ padding:18px clamp(16px,3vw,28px) 10px; text-align:center; }
+  header h1{margin:0 0 6px;font-size:clamp(22px,3.2vw,30px);letter-spacing:0.2px;}
+  header p{margin:0;color:var(--ink-muted);font-size:clamp(14px,1.8vw,16px);}  
+  .wrap{ display:grid; grid-template-columns: 360px 1fr; gap:20px; padding: 10px clamp(12px,3vw,28px) 24px; flex:1; min-height:0; }
+  @media (max-width: 980px){ .wrap{grid-template-columns: 1fr; grid-auto-rows:min-content;} }
+  .card{ background:var(--white); border-radius:var(--radius); box-shadow:var(--card-shadow); padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .card h2{margin:2px 0 4px; font-size:18px}
+  .card p, .muted{color:var(--ink-muted); margin:0;}
+  .section-label{font-weight:600; color:var(--ink); margin-top:4px; margin-bottom:4px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{ border:1px solid var(--sage-2); color:#223; background:#fff; border-radius:999px; padding:8px 10px; font-size:14px; cursor:pointer; user-select:none; transition:transform .05s ease, background .2s ease, border-color .2s ease; }
+  .chip:hover{transform:translateY(-1px); background:var(--sage-3);} 
+  button.primary{ background:var(--blue-2); color:#fff; border:none; border-radius:12px; padding:10px 12px; font-weight:600; cursor:pointer; box-shadow:var(--card-shadow); }
+  button.primary:active{transform:translateY(1px)}
+  .toggle{ display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; padding:6px 8px; border-radius:10px; transition:background .2s; }
+  .toggle input{appearance:none; width:38px; height:22px; background:#cfd7de; border-radius:999px; position:relative; outline:none; transition:background .2s;}
+  .toggle input::after{ content:""; position:absolute; left:2px; top:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s; }
+  .toggle input:checked{background:var(--purple-2)}
+  .toggle input:checked::after{left:18px}
+  .legend{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; font-size:12px; color:var(--ink-muted);} 
+  .pill{padding:6px 10px; border-radius:999px; background:#f1f5f8; border:1px solid #e3ebf1; text-align:center;}
+  .stage{ position:relative; background:var(--white); border-radius:var(--radius); box-shadow:var(--card-shadow); padding:10px; min-height:440px; display:flex; flex-direction:column; }
+  .canvas-wrap{position:relative; flex:1; min-height:360px;}
+  .help{font-size:13px; color:var(--ink-muted); text-align:center; margin-top:6px;}
+  footer{padding:10px 18px 18px; text-align:center; color:var(--ink-muted); font-size:13px;}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Calm Home Base</h1>
+    <p>Drag the feeling dot. Notice how it returns toward calm in about 20 seconds. Skills make the return faster. Context can slow it.</p>
+  </header>
+
+  <div class="wrap">
+    <!-- Controls -->
+    <aside class="card" aria-label="Controls for events and regulation">
+      <h2>Try an Event</h2>
+      <p class="muted">These push your feelings away from calm.</p>
+      <div class="chips" id="eventChips" aria-label="Event buttons">
+        <div class="chip" data-testid="evt-popquiz" data-push="fear">Pop quiz</div>
+        <div class="chip" data-testid="evt-argument" data-push="anger">Argument</div>
+        <div class="chip" data-testid="evt-badnews" data-push="sad">Bad news</div>
+        <div class="chip" data-testid="evt-praise" data-push="happy">Praise</div>
+        <div class="chip" data-testid="evt-embarrass" data-push="anger">Embarrassment</div>
+        <div class="chip" data-testid="evt-loud" data-push="fear">Loud noise</div>
+        <div class="chip" data-testid="evt-funny" data-push="happy">Funny video</div>
+      </div>
+
+      <h2>Regulation Skills</h2>
+      <p class="muted">These help the dot return to calm faster.</p>
+      <div class="chips">
+        <button class="chip" id="breatheBtn" aria-label="Box Breathing Boost (10s)">Box breathing (10s)</button>
+        <div class="chip" data-testid="skill-reframe" data-skill="reframe">Reframe thought</div>
+        <div class="chip" data-testid="skill-ask" data-skill="askhelp">Ask for help</div>
+        <div class="chip" data-testid="skill-move" data-skill="move">Move body</div>
+      </div>
+
+      <div class="section-label">Context</div>
+      <label class="toggle">
+        <input id="sleepToggle" type="checkbox" />
+        <span>Sleep-deprived (slower)</span>
+      </label>
+      <label class="toggle">
+        <input id="ruminateToggle" type="checkbox" />
+        <span>Ruminating (pulls away from calm)</span>
+      </label>
+
+      <div class="section-label">Playback</div>
+      <div class="chips">
+        <button class="primary" id="pauseBtn" aria-pressed="false" aria-label="Pause or resume the simulation">Pause</button>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <div class="pill">Fear / Anxiety</div>
+        <div class="pill">Sadness</div>
+        <div class="pill">Anger / Frustration</div>
+        <div class="pill">Excited / Happy</div>
+      </div>
+
+      <p class="muted">Tip: Use arrow keys to nudge the dot. Press <strong>Space</strong> for Box Breathing. Press <strong>P</strong> to Pause/Resume.</p>
+    </aside>
+
+    <!-- Stage -->
+    <section class="stage" aria-label="Interactive calm map">
+      <div class="canvas-wrap" id="canvasWrap">
+        <svg id="map" role="img" aria-label="Calm map" width="100%" height="100%" viewBox="0 0 800 520" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <radialGradient id="calmGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#eaf3f7"/>
+              <stop offset="100%" stop-color="#ffffff"/>
+            </radialGradient>
+          </defs>
+
+          <!-- Axes -->
+          <line x1="400" y1="30" x2="400" y2="490" stroke="#e1e8ef" stroke-width="2"/>
+          <line x1="60" y1="260" x2="740" y2="260" stroke="#e1e8ef" stroke-width="2"/>
+
+          <!-- Calm zone -->
+          <circle cx="400" cy="260" r="120" fill="url(#calmGradient)" stroke="#d9e6ee"/>
+
+          <!-- Labels -->
+          <text x="402" y="50" fill="#6b7280" font-size="14">Fear / Anxiety</text>
+          <text x="402" y="480" fill="#6b7280" font-size="14">Excited / Happy</text>
+          <text x="60" y="260" fill="#6b7280" font-size="14" text-anchor="start" dominant-baseline="middle">Sadness</text>
+          <text x="740" y="260" fill="#6b7280" font-size="14" text-anchor="end" dominant-baseline="middle">Anger / Frustration</text>
+
+          <!-- Calm nucleus -->
+          <circle cx="400" cy="260" r="36" fill="#ffffff" stroke="#cfdbe4"/>
+          <text x="400" y="263" fill="#556476" font-size="13" text-anchor="middle">Calm</text>
+
+          <!-- Feeling dot -->
+          <circle id="feelingDot" cx="520" cy="160" r="12" fill="#5A94B1" stroke="#2c5366" stroke-width="1.5" style="cursor:grab"/>
+        </svg>
+      </div>
+      <div class="help" id="statusHelp">Status: Normal | Return speed: Medium</div>
+    </section>
+  </div>
+
+  <footer>This is a teaching demo: all moves are simulations to show how skills help us return to a calm home base.</footer>
+
+<script>
+(function(){
+  const svg = document.getElementById('map');
+  const dot = document.getElementById('feelingDot');
+  const status = document.getElementById('statusHelp');
+  const sleepToggle = document.getElementById('sleepToggle');
+  const ruminateToggle = document.getElementById('ruminateToggle');
+  const breatheBtn = document.getElementById('breatheBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+
+  const W = 800, H = 520;
+  const center = { x: 400, y: 260 };
+
+  let pos = { x: 520, y: 160 };
+  let dragging = false;
+  let dragOffset = { x:0, y:0 };
+  let paused = false;
+
+  // Slower base: ~95% return in ~20s
+  const baseSeconds = 20;
+  const LN20 = Math.log(20);
+
+  let breatheBoostUntil = 0;
+  let dampingNudges = [];
+
+  function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+  function now(){ return performance.now(); }
+
+  // --- Events ---
+  const eventMap = {
+    fear:    { dir: {x: 0,   y:-1}, mag: 380 },
+    sad:     { dir: {x:-1,   y: 0}, mag: 330 },
+    anger:   { dir: {x: 1,   y: 0}, mag: 360 },
+    happy:   { dir: {x: 0,   y: 1}, mag: 340 },
+  };
+  function applyEvent(key){
+    if(!key || !eventMap[key]) return;
+    const {dir, mag} = eventMap[key];
+    pos.x = clamp(pos.x + dir.x*mag, 60, W-60);
+    pos.y = clamp(pos.y + dir.y*mag, 30, H-30);
+    updateDot();
+  }
+  document.getElementById('eventChips').addEventListener('click', (e)=>{
+    const t = e.target.closest('.chip'); if(!t) return; applyEvent(t.dataset.push);
+  });
+
+  // --- Skills ---
+  function nudgeRate(extraRate, ms){ dampingNudges.push({ extraRate, until: now()+ms }); }
+  document.body.addEventListener('click', (e)=>{
+    const t = e.target.closest('.chip'); if(!t) return;
+    const skill = t.dataset.skill;
+    if(skill === 'reframe'){ nudgeRate( 0.06, 4000); }
+    if(skill === 'askhelp'){ nudgeRate( 0.08, 6000); }
+    if(skill === 'move'){    nudgeRate( 0.04, 3000); }
+  });
+  function startBreatheBoost(){ breatheBoostUntil = now() + 10000; showStatus(); }
+  breatheBtn.addEventListener('click', startBreatheBoost);
+
+  // --- Pause / Resume ---
+  function setPaused(p){
+    paused = !!p;
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    showStatus();
+  }
+  pauseBtn.addEventListener('click', ()=> setPaused(!paused));
+
+  // --- Keyboard ---
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space'){ e.preventDefault(); startBreatheBoost(); }
+    if(e.key === 'p' || e.key === 'P'){ e.preventDefault(); setPaused(!paused); }
+    const step = 18;
+    if(e.code === 'ArrowUp'){    pos.y -= step; updateDot(); }
+    if(e.code === 'ArrowDown'){  pos.y += step; updateDot(); }
+    if(e.code === 'ArrowLeft'){  pos.x -= step; updateDot(); }
+    if(e.code === 'ArrowRight'){ pos.x += step; updateDot(); }
+  });
+
+  // --- Rate & Status ---
+  function currentRate(){
+    let rate = LN20 / baseSeconds;            // base per-second rate
+    if(sleepToggle.checked) rate *= 0.7;      // slower if sleep-deprived
+    if(now() < breatheBoostUntil) rate += 0.18; // boost during breathing
+    const t = now();
+    dampingNudges = dampingNudges.filter(d => d.until > t);
+    for(const d of dampingNudges) rate += d.extraRate;
+    return Math.max(0.0001, rate);
+  }
+  function showStatus(){
+    const base = sleepToggle.checked ? 'Sleep-deprived' : 'Normal';
+    const rb = ruminateToggle.checked ? ' • Ruminating' : '';
+    const r = currentRate();
+    let speed = 'Slow';
+    if(r > 0.38) speed = 'Fast'; else if(r > 0.24) speed = 'Medium';
+    const pausedTxt = paused ? 'Paused | ' : '';
+    status.textContent = `${pausedTxt}Status: ${base}${rb} | Return speed: ${speed}`;
+  }
+  sleepToggle.addEventListener('change', showStatus);
+  ruminateToggle.addEventListener('change', showStatus);
+
+  // --- Dragging ---
+  function ptFromEvent(evt){
+    const rect = svg.getBoundingClientRect();
+    let clientX, clientY;
+    if(evt.touches && evt.touches[0]){ clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY; }
+    else { clientX = evt.clientX; clientY = evt.clientY; }
+    const x = (clientX - rect.left) * (W/rect.width);
+    const y = (clientY - rect.top)  * (H/rect.height);
+    return {x,y};
+  }
+  function onDown(evt){
+    evt.preventDefault();
+    const p = ptFromEvent(evt);
+    const dx = p.x - pos.x, dy = p.y - pos.y;
+    const r = 16; // hit radius
+    if(dx*dx + dy*dy <= r*r*2.5){
+      dragging = true; dot.style.cursor = 'grabbing';
+      dragOffset.x = pos.x - p.x; dragOffset.y = pos.y - p.y;
+    }
+  }
+  function onMove(evt){
+    if(!dragging) return;
+    const p = ptFromEvent(evt);
+    pos.x = clamp(p.x + dragOffset.x, 60, W-60);
+    pos.y = clamp(p.y + dragOffset.y, 30, H-30);
+    updateDot();
+  }
+  function onUp(){ dragging = false; dot.style.cursor = 'grab'; }
+
+  svg.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  svg.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+
+  // --- Render ---
+  function updateDot(){
+    dot.setAttribute('cx', pos.x.toFixed(2));
+    dot.setAttribute('cy', pos.y.toFixed(2));
+    // color feedback by quadrant
+    const dx = pos.x - center.x, dy = pos.y - center.y;
+    let fillVar = '--blue-2';                  // default
+    if(dy < -10) fillVar = '--blue-2';         // fear/anxiety (up)
+    if(dy >  10) fillVar = '--sage-1';         // excited/happy (down)
+    if(dx < -10) fillVar = '--purple-2';       // sadness (left)
+    if(dx >  10) fillVar = '--danger';         // anger (right)
+    const color = getComputedStyle(document.documentElement).getPropertyValue(fillVar).trim() || '#5A94B1';
+    dot.setAttribute('fill', color);
+  }
+
+  // --- Animation loop ---
+  function tick(lastT){
+    const t = performance.now();
+    const dtSec = Math.max(0, (t - lastT) / 1000);
+
+    if(!dragging && !paused){
+      // exponential move toward center
+      const rate = currentRate();
+      const dx = center.x - pos.x;
+      const dy = center.y - pos.y;
+      const alpha = 1 - Math.exp(-rate * dtSec); // 0..1
+      pos.x += dx * alpha;
+      pos.y += dy * alpha;
+
+      // ruminating: gentle outward drift (opposes return)
+      if(ruminateToggle.checked){
+        const dist = Math.hypot(center.x - pos.x, center.y - pos.y) || 1;
+        const ux = (center.x - pos.x) / dist; // toward center
+        const uy = (center.y - pos.y) / dist;
+        const drift = 12; // px/sec
+        pos.x -= ux * drift * dtSec;
+        pos.y -= uy * drift * dtSec;
+      }
+
+      // clamp and render
+      pos.x = clamp(pos.x, 60, W-60);
+      pos.y = clamp(pos.y, 30, H-30);
+      updateDot();
+    } else {
+      // still render while paused/dragging so color & coords stay fresh
+      updateDot();
+    }
+
+    requestAnimationFrame(()=>tick(t));
+  }
+
+  // --- Init ---
+  updateDot();
+  showStatus();
+  requestAnimationFrame(()=>tick(performance.now()));
+})();
+</script>
+</body>
+</html>
