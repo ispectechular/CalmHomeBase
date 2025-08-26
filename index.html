@@ -48,6 +48,11 @@
   .canvas-wrap{position:relative; flex:1; min-height:360px;}
   .help{font-size:13px; color:var(--ink-muted); text-align:center; margin-top:6px;}
   footer{padding:10px 18px 18px; text-align:center; color:var(--ink-muted); font-size:13px;}
+
+  /* Make the stage truly fill the screen while in full screen */
+  #canvasWrap:fullscreen, #canvasWrap:-webkit-full-screen{
+    width:100vw; height:100vh; background:#ffffff;
+  }
 </style>
 </head>
 <body>
@@ -93,6 +98,7 @@
       <div class="section-label">Playback</div>
       <div class="chips">
         <button class="primary" id="pauseBtn" aria-pressed="false" aria-label="Pause or resume the simulation">Pause</button>
+        <button class="primary" id="fsBtn" aria-pressed="false" aria-label="Toggle full screen">Full Screen</button>
       </div>
 
       <div class="legend" aria-hidden="true">
@@ -102,7 +108,7 @@
         <div class="pill">Excited / Happy</div>
       </div>
 
-      <p class="muted">Tip: Use arrow keys to nudge the dot. Press <strong>Space</strong> for Box Breathing. Press <strong>P</strong> to Pause/Resume.</p>
+      <p class="muted">Tip: Use arrow keys to nudge the dot. Press <strong>Space</strong> for Box Breathing. Press <strong>P</strong> to Pause/Resume. Press <strong>F</strong> for Full Screen.</p>
     </aside>
 
     <!-- Stage -->
@@ -152,6 +158,8 @@
   const ruminateToggle = document.getElementById('ruminateToggle');
   const breatheBtn = document.getElementById('breatheBtn');
   const pauseBtn = document.getElementById('pauseBtn');
+  const canvasWrap = document.getElementById('canvasWrap');
+  const fsBtn = document.getElementById('fsBtn');
 
   const W = 800, H = 520;
   const center = { x: 400, y: 260 };
@@ -210,10 +218,29 @@
   }
   pauseBtn.addEventListener('click', ()=> setPaused(!paused));
 
+  // --- Full Screen ---
+  function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement; }
+  function updateFSButton(){ const on = !!fsElement(); fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.textContent = on ? 'Exit Full Screen' : 'Full Screen'; }
+  function enterFS(el){
+    if(el.requestFullscreen) return el.requestFullscreen();
+    if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    if(el.msRequestFullscreen) return el.msRequestFullscreen();
+  }
+  function exitFS(){
+    if(document.exitFullscreen) return document.exitFullscreen();
+    if(document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    if(document.msExitFullscreen) return document.msExitFullscreen();
+  }
+  fsBtn.addEventListener('click', ()=>{ fsElement() ? exitFS() : enterFS(canvasWrap); });
+  document.addEventListener('fullscreenchange', updateFSButton);
+  document.addEventListener('webkitfullscreenchange', updateFSButton);
+  document.addEventListener('msfullscreenchange', updateFSButton);
+
   // --- Keyboard ---
   window.addEventListener('keydown', (e)=>{
     if(e.code === 'Space'){ e.preventDefault(); startBreatheBoost(); }
     if(e.key === 'p' || e.key === 'P'){ e.preventDefault(); setPaused(!paused); }
+    if(e.key === 'f' || e.key === 'F'){ e.preventDefault(); fsElement() ? exitFS() : enterFS(canvasWrap); }
     const step = 18;
     if(e.code === 'ArrowUp'){    pos.y -= step; updateDot(); }
     if(e.code === 'ArrowDown'){  pos.y += step; updateDot(); }
@@ -333,6 +360,7 @@
   // --- Init ---
   updateDot();
   showStatus();
+  updateFSButton();
   requestAnimationFrame(()=>tick(performance.now()));
 })();
 </script>
