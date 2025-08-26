@@ -49,10 +49,18 @@
   .help{font-size:13px; color:var(--ink-muted); text-align:center; margin-top:6px;}
   footer{padding:10px 18px 18px; text-align:center; color:var(--ink-muted); font-size:13px;}
 
-  /* Make the stage truly fill the screen while in full screen */
-  #canvasWrap:fullscreen, #canvasWrap:-webkit-full-screen{
-    width:100vw; height:100vh; background:#ffffff;
+  /* Full screen polish */
+  #canvasWrap:fullscreen,
+  #canvasWrap:-webkit-full-screen{
+    width:100vw; height:100vh; background:#f9fbff; /* light, not black */
   }
+  /* Ensure SVG itself has a background in both normal & fullscreen */
+  #canvasWrap > svg, #canvasWrap svg{ background:#ffffff; display:block; }
+  #canvasWrap:fullscreen svg, #canvasWrap:-webkit-full-screen svg{ width:100vw; height:100vh; }
+
+  /* Axis label halo to avoid the line "strikethrough" look */
+  .axisLabel{ fill:#6b7280; font-size:14px; }
+  .axisHalo{ fill:#ffffff; stroke:#ffffff; stroke-width:6px; paint-order:stroke; stroke-linejoin:round; }
 </style>
 </head>
 <body>
@@ -129,11 +137,23 @@
           <!-- Calm zone -->
           <circle cx="400" cy="260" r="120" fill="url(#calmGradient)" stroke="#d9e6ee"/>
 
-          <!-- Labels -->
-          <text x="402" y="50" fill="#6b7280" font-size="14">Fear / Anxiety</text>
-          <text x="402" y="480" fill="#6b7280" font-size="14">Excited / Happy</text>
-          <text x="60" y="260" fill="#6b7280" font-size="14" text-anchor="start" dominant-baseline="middle">Sadness</text>
-          <text x="740" y="260" fill="#6b7280" font-size="14" text-anchor="end" dominant-baseline="middle">Anger / Frustration</text>
+          <!-- Labels with a white halo behind to keep lines from crossing text visually -->
+          <g>
+            <text class="axisHalo" x="402" y="50">Fear / Anxiety</text>
+            <text class="axisLabel" x="402" y="50">Fear / Anxiety</text>
+          </g>
+          <g>
+            <text class="axisHalo" x="402" y="480">Excited / Happy</text>
+            <text class="axisLabel" x="402" y="480">Excited / Happy</text>
+          </g>
+          <g>
+            <text class="axisHalo" x="60" y="260" text-anchor="start" dominant-baseline="middle">Sadness</text>
+            <text class="axisLabel" x="60" y="260" text-anchor="start" dominant-baseline="middle">Sadness</text>
+          </g>
+          <g>
+            <text class="axisHalo" x="740" y="260" text-anchor="end" dominant-baseline="middle">Anger / Frustration</text>
+            <text class="axisLabel" x="740" y="260" text-anchor="end" dominant-baseline="middle">Anger / Frustration</text>
+          </g>
 
           <!-- Calm nucleus -->
           <circle cx="400" cy="260" r="36" fill="#ffffff" stroke="#cfdbe4"/>
